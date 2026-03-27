@@ -1,0 +1,106 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "name": "TMMS Admin",
+      "email": "admin@tmms.com",
+      "passwordHash": "$2b$10$dkZvr1REP37GGfBE1d/BDeqmf3PwSfh5rBbTeH7WgdCvClVfPObre",
+      "role": "admin",
+      "created_at": "2026-03-26T12:52:07.301Z"
+    },
+    {
+      "id": "u2",
+      "name": "User One",
+      "email": "user1@tmms.com",
+      "passwordHash": "$2b$10$RjE4pWvvhQx7ft8J8wZUse5cC.2MwD5tI9p6p2XNjjvATAVg1t5I6",
+      "role": "user",
+      "created_at": "2026-03-26T12:52:36.592Z"
+    },
+    {
+      "id": "u3",
+      "name": "yassine",
+      "email": "mohamed@bnj",
+      "passwordHash": "$2b$10$.AVrpmDJcNLYi1TloSTyJuXEOvqpJE39gjvsTF8yiVAEAOnbb5TSS",
+      "role": "user",
+      "created_at": "2026-03-26T13:05:46.587Z"
+    },
+    {
+      "id": "u4",
+      "name": "krimobnj",
+      "email": "krimo@gmail.com",
+      "passwordHash": "$2b$10$hu/LZi3/vv8snLr1VwzLGuJ3v6YL.EWyY9LEmVv1ddbmXIqlTb7Li",
+      "role": "user",
+      "created_at": "2026-03-26T13:21:43.891Z"
+    }
+  ],
+  "files": [
+    {
+      "id": "f1",
+      "name": "Assigned File",
+      "original_name": "access-sample.xlsx",
+      "path": "1774529905328_access-sample.xlsx",
+      "mime_type": "application/octet-stream",
+      "type": "file",
+      "powerbi_url": null,
+      "created_at": "2026-03-26T12:58:25.338Z",
+      "created_by": "u1"
+    },
+    {
+      "id": "f2",
+      "name": "dtatat",
+      "original_name": "ex-001.xlsx",
+      "path": "1774531238670_ex-001.xlsx",
+      "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "type": "file",
+      "powerbi_url": null,
+      "created_at": "2026-03-26T13:20:38.678Z",
+      "created_by": "u1"
+    }
+  ],
+  "user_files": [
+    {
+      "id": "uf1",
+      "user_id": "u3",
+      "file_id": "f1",
+      "created_at": "2026-03-26T13:08:30.419Z"
+    },
+    {
+      "id": "uf2",
+      "user_id": "u2",
+      "file_id": "f2",
+      "created_at": "2026-03-26T13:20:38.678Z"
+    },
+    {
+      "id": "uf3",
+      "user_id": "u4",
+      "file_id": "f2",
+      "created_at": "2026-03-26T13:23:23.024Z"
+    }
+  ],
+  "requests": [
+    {
+      "id": "r1",
+      "user_id": "u3",
+      "file_id": "f1",
+      "status": "approved",
+      "created_at": "2026-03-26T13:05:57.669Z",
+      "updated_at": "2026-03-26T13:08:30.419Z"
+    },
+    {
+      "id": "r2",
+      "user_id": "u4",
+      "file_id": "f2",
+      "status": "approved",
+      "created_at": "2026-03-26T13:21:58.256Z",
+      "updated_at": "2026-03-26T13:23:23.024Z"
+    },
+    {
+      "id": "r3",
+      "user_id": "u4",
+      "file_id": "f1",
+      "status": "pending",
+      "created_at": "2026-03-26T13:24:53.022Z",
+      "updated_at": "2026-03-26T13:24:53.022Z"
+    }
+  ]
+}
