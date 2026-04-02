@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const multer = require('multer');
 const authMiddleware = require('../utils/authMiddleware');
@@ -9,13 +10,30 @@ const User = require('../models/User');
 const UserFile = require('../models/UserFile');
 const AccessRequest = require('../models/AccessRequest');
 const { nextPrefixedId } = require('../utils/id');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
-const uploadDir = path.join(__dirname, '..', 'uploads');
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+function resolveUploadDir() {
+  const candidates = [
+    path.join('/tmp', 'tmms-uploads'),
+    path.join(os.tmpdir(), 'tmms-uploads'),
+    path.join(__dirname, '..', 'uploads')
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      fs.mkdirSync(candidate, { recursive: true });
+      return candidate;
+    } catch (_error) {
+      // Try next candidate.
+    }
+  }
+
+  throw new Error('Unable to initialize upload directory.');
 }
+
+const uploadDir = resolveUploadDir();
 
 const allowedMimeTypes = new Set([
   'application/pdf',
@@ -101,6 +119,16 @@ router.post('/files/upload', authMiddleware, requireRole('admin'), (req, res) =>
     });
 
     await fileRecord.save();
+    await logAudit({
+      req,
+      action: 'file.upload',
+      entityType: 'file',
+      entityId: fileRecord.id,
+      details: {
+        name: fileRecord.name,
+        originalName: fileRecord.original_name
+      }
+    });
 
     const rawAssign = req.body.assignTo;
     const assignTo = Array.isArray(rawAssign) ? rawAssign : rawAssign ? [rawAssign] : [];
@@ -143,6 +171,13 @@ router.post('/files/powerbi', authMiddleware, requireRole('admin'), async (req, 
     created_at: new Date(),
     created_by: req.user.id
   });
+  await logAudit({
+    req,
+    action: 'powerbi.create',
+    entityType: 'file',
+    entityId: fileRecord.id,
+    details: { name, powerBiUrl }
+  });
 
   const users = Array.isArray(assignTo) ? assignTo : [assignTo];
   await Promise.all(
@@ -158,6 +193,14 @@ router.post('/files/powerbi', authMiddleware, requireRole('admin'), async (req, 
       }
     })
   );
+
+  await logAudit({
+    req,
+    action: 'file.assign',
+    entityType: 'file',
+    entityId: file.id,
+    details: { userIds: users.filter(Boolean) }
+  });
 
   return res.status(201).json({ success: true, file: fileRecord });
 });
@@ -200,6 +243,13 @@ router.patch('/files/:id', authMiddleware, requireRole('admin'), async (req, res
   if (file.type === 'powerbi' && powerBiUrl) file.powerbi_url = powerBiUrl;
 
   await file.save();
+  await logAudit({
+    req,
+    action: 'file.update',
+    entityType: 'file',
+    entityId: file.id,
+    details: { name: file.name, powerBiUrl: file.powerbi_url || null }
+  });
   return res.status(200).json({ success: true, file });
 });
 
@@ -217,6 +267,14 @@ router.delete('/files/:id', authMiddleware, requireRole('admin'), async (req, re
     const fullPath = path.join(uploadDir, removed.path);
     if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
   }
+
+  await logAudit({
+    req,
+    action: 'file.delete',
+    entityType: 'file',
+    entityId: removed.id,
+    details: { name: removed.name, type: removed.type }
+  });
 
   return res.status(200).json({ success: true, message: 'File deleted.' });
 });
@@ -281,6 +339,14 @@ router.post('/files/:id/request-access', authMiddleware, requireRole('user'), as
     updated_at: new Date()
   });
 
+  await logAudit({
+    req,
+    action: 'access.request.create',
+    entityType: 'access_request',
+    entityId: request.id,
+    details: { fileId: file.id }
+  });
+
   return res.status(201).json({ success: true, request });
 });
 
@@ -334,7 +400,16 @@ router.patch('/requests/:id', authMiddleware, requireRole('admin'), async (req, 
     }
   }
 
+  await logAudit({
+    req,
+    action: `access.request.${status}`,
+    entityType: 'access_request',
+    entityId: request.id,
+    details: { userId: request.user_id, fileId: request.file_id }
+  });
+
   return res.status(200).json({ success: true, request });
 });
 
 module.exports = router;
+

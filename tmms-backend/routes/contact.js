@@ -4,6 +4,7 @@ const requireRole = require('../utils/roleMiddleware');
 const ContactMessage = require('../models/ContactMessage');
 const User = require('../models/User');
 const { nextPrefixedId } = require('../utils/id');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -25,6 +26,14 @@ router.post('/messages', authMiddleware, async (req, res) => {
     message: String(message).trim(),
     status: 'unread',
     created_at: new Date()
+  });
+
+  await logAudit({
+    req,
+    action: 'contact.message.create',
+    entityType: 'contact_message',
+    entityId: created.id,
+    details: { subject: created.subject }
   });
 
   return res.status(201).json({ success: true, message: created });
@@ -55,6 +64,14 @@ router.patch('/messages/:id/read', authMiddleware, requireRole('admin'), async (
     message.status = 'read';
     message.read_at = new Date();
     await message.save();
+
+    await logAudit({
+      req,
+      action: 'contact.message.read',
+      entityType: 'contact_message',
+      entityId: message.id,
+      details: { subject: message.subject, userId: message.user_id }
+    });
   }
 
   return res.status(200).json({ success: true, message });

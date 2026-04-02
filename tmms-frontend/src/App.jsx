@@ -17,6 +17,7 @@ import Sidebar from './components/Sidebar';
 import ProfileDropdown from './components/ProfileDropdown';
 import ProfilePage from './components/ProfilePage';
 import ContactPage from './components/ContactPage';
+import AuditLogsPage from './components/AuditLogsPage';
 import { buildDashboardData } from './components/chartUtils';
 import { createTranslator } from './i18n';
 
@@ -115,7 +116,7 @@ function App() {
       localStorage.setItem('tmms-user', JSON.stringify(data.user));
       toast.success(t('welcomeBack', { name: data.user.name }));
     } catch (error) {
-      const message = error?.response?.data?.message || t('signInFailed');
+      const message = error?.response?.data?.message || error?.message || t('signInFailed');
       toast.error(message);
     } finally {
       setAuthSubmitting(false);
@@ -132,7 +133,7 @@ function App() {
       localStorage.setItem('tmms-user', JSON.stringify(data.user));
       toast.success(t('accountCreated'));
     } catch (error) {
-      const message = error?.response?.data?.message || t('signUpFailed');
+      const message = error?.response?.data?.message || error?.message || t('signUpFailed');
       toast.error(message);
     } finally {
       setAuthSubmitting(false);
@@ -208,6 +209,10 @@ function App() {
       setActiveModule('users');
       return;
     }
+    if (key === 'audit') {
+      setActiveModule('audit');
+      return;
+    }
     if (key === 'settings') {
       setActiveModule('settings');
       return;
@@ -234,7 +239,13 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 transition-colors dark:bg-tmms-bg dark:text-slate-100">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onSelect={onSidebarSelect} onLogout={onLogout} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onSelect={onSidebarSelect}
+        onLogout={onLogout}
+        currentUser={user}
+      />
       <main className="flex-1 px-4 py-8 md:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -313,6 +324,14 @@ function App() {
             >
               Users
             </button>
+            {user?.role === 'admin' ? (
+              <button
+                className={`w-full rounded-xl px-4 py-2 text-sm sm:w-auto ${activeModule === 'audit' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}
+                onClick={() => setActiveModule('audit')}
+              >
+                {t('auditLogs')}
+              </button>
+            ) : null}
             <button
               className={`w-full rounded-xl px-4 py-2 text-sm sm:w-auto ${activeModule === 'contact' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}
               onClick={() => setActiveModule('contact')}
@@ -375,6 +394,8 @@ function App() {
             <FileAccessCenter user={user} t={t} />
           ) : activeModule === 'users' ? (
             <UsersPage currentUser={user} t={t} />
+          ) : activeModule === 'audit' ? (
+            <AuditLogsPage currentUser={user} t={t} />
           ) : activeModule === 'profile' ? (
             <ProfilePage user={user} />
           ) : activeModule === 'contact' ? (

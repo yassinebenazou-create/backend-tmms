@@ -5,6 +5,7 @@ const authMiddleware = require('../utils/authMiddleware');
 const requireRole = require('../utils/roleMiddleware');
 const User = require('../models/User');
 const { nextPrefixedId } = require('../utils/id');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -56,6 +57,14 @@ router.post('/signup', async (req, res) => {
     });
 
     await user.save();
+    await logAudit({
+      req,
+      actor: { id: user.id, name: user.name, email: user.email, role: user.role },
+      action: 'auth.signup',
+      entityType: 'user',
+      entityId: user.id,
+      details: { email: user.email }
+    });
 
     const token = signToken(user);
     return res.status(201).json({ success: true, token, user: sanitizeUser(user) });
@@ -83,6 +92,15 @@ router.post('/signin', async (req, res) => {
     if (!matches) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
+
+    await logAudit({
+      req,
+      actor: { id: user.id, name: user.name, email: user.email, role: user.role },
+      action: 'auth.signin',
+      entityType: 'user',
+      entityId: user.id,
+      details: { email: user.email }
+    });
 
     const token = signToken(user);
     return res.status(200).json({ success: true, token, user: sanitizeUser(user) });

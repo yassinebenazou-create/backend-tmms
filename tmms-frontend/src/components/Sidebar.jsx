@@ -1,15 +1,16 @@
 ﻿import { useEffect } from 'react';
-import { LayoutDashboard, FolderKanban, Users, Settings, LogOut, X, Mail } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Users, Settings, LogOut, X, Mail, ShieldCheck } from 'lucide-react';
 
 const items = [
   { key: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { key: 'files', label: 'Centre de Fichiers', icon: FolderKanban },
   { key: 'users', label: 'Users', icon: Users },
+  { key: 'audit', label: 'Audit Logs', icon: ShieldCheck, adminOnly: true },
   { key: 'contact', label: 'Contact', icon: Mail },
   { key: 'settings', label: 'Settings', icon: Settings }
 ];
 
-function Sidebar({ open, onClose, onSelect, onLogout }) {
+function Sidebar({ open, onClose, onSelect, onLogout, currentUser }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onClose();
@@ -47,7 +48,9 @@ function Sidebar({ open, onClose, onSelect, onLogout }) {
         </div>
 
         <nav className="space-y-2">
-          {items.map((item) => {
+          {items
+            .filter((item) => !item.adminOnly || currentUser?.role === 'admin')
+            .map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -63,7 +66,7 @@ function Sidebar({ open, onClose, onSelect, onLogout }) {
                 {item.label}
               </button>
             );
-          })}
+            })}
 
           <button
             type="button"
