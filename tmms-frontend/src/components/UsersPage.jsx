@@ -1,10 +1,11 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { Search, Users2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Search, Trash2, Users2, Database } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { listUsers } from '../api/accessApi';
+import { deleteUserById, listUsers, runDatabaseCleanup } from '../api/accessApi';
 
 function UsersPage({ currentUser, t }) {
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState([]);
 
@@ -36,6 +37,46 @@ function UsersPage({ currentUser, t }) {
     );
   }, [query, users]);
 
+  const deleteUser = async (userToDelete) => {
+    if (!userToDelete?.id) return;
+    if (userToDelete.id === currentUser?.id) {
+      toast.error('You cannot delete your own account.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete user "${userToDelete.name}" (${userToDelete.email})?`);
+    if (!confirmed) return;
+
+    setActionLoading(true);
+    try {
+      const res = await deleteUserById(userToDelete.id);
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      toast.success(res.message || 'User deleted.');
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const cleanDatabase = async () => {
+    const confirmed = window.confirm('Run cleanup for records older than 90 days?');
+    if (!confirmed) return;
+
+    setActionLoading(true);
+    try {
+      const res = await runDatabaseCleanup(90);
+      const removed = res?.removed || {};
+      toast.success(
+        `Cleanup done. Logs:${removed.auditLogs || 0}, Requests:${removed.accessRequests || 0}, Messages:${removed.contactMessages || 0}, Links:${removed.orphanUserFileLinks || 0}`
+      );
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Cleanup failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <section className="glass-card rounded-2xl p-6">
@@ -58,15 +99,26 @@ function UsersPage({ currentUser, t }) {
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('usersPageTitle')}</h2>
           </div>
 
-          <label className="relative block w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('usersSearchPlaceholder')}
-              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            />
-          </label>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <label className="relative block w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('usersSearchPlaceholder')}
+                className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={cleanDatabase}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:bg-amber-100 disabled:opacity-60 dark:border-amber-600/40 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+            >
+              <Database className="h-4 w-4" />
+              Clean DB
+            </button>
+          </div>
         </div>
       </div>
 
@@ -94,6 +146,7 @@ function UsersPage({ currentUser, t }) {
                 <th className="px-4 py-3 text-left">Email</th>
                 <th className="px-4 py-3 text-left">Role</th>
                 <th className="px-4 py-3 text-left">ID</th>
+                <th className="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -103,6 +156,18 @@ function UsersPage({ currentUser, t }) {
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{u.email}</td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{u.role}</td>
                   <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{u.id}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      disabled={actionLoading || u.id === currentUser?.id}
+                      onClick={() => deleteUser(u)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-600/40 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+                      title={u.id === currentUser?.id ? 'Cannot delete your own account' : 'Delete user'}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -115,6 +180,15 @@ function UsersPage({ currentUser, t }) {
               <p className="font-semibold text-slate-800 dark:text-slate-100">{u.name}</p>
               <p className="text-sm text-slate-600 dark:text-slate-300">{u.email}</p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{u.role} • {u.id}</p>
+              <button
+                type="button"
+                disabled={actionLoading || u.id === currentUser?.id}
+                onClick={() => deleteUser(u)}
+                className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-600/40 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
             </div>
           ))}
         </div>

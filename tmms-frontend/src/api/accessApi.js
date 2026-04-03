@@ -47,6 +47,16 @@ export async function listUsers() {
   return response.data;
 }
 
+export async function deleteUserById(userId) {
+  const response = await api.delete(`/api/auth/users/${userId}`);
+  return response.data;
+}
+
+export async function runDatabaseCleanup(days = 90) {
+  const response = await api.post('/api/auth/cleanup', { days });
+  return response.data;
+}
+
 export async function downloadManagedFile(fileId, fileName) {
   const response = await api.get(`/api/access/files/${fileId}/download`, { responseType: 'blob' });
   const blob = new Blob([response.data]);
