@@ -55,11 +55,11 @@ function ContactPage({ user, t }) {
             </div>
             <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
               <Phone className="h-4 w-4" />
-              +212 6 00 00 00 00
+              +212 608-738801
             </div>
             <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
               <MapPin className="h-4 w-4" />
-              Casablanca, Morocco
+              El Jadida, Morocco
             </div>
           </div>
         </div>
