@@ -4,6 +4,7 @@ const PDFDocument = require('pdfkit');
 const authMiddleware = require('../utils/authMiddleware');
 const requireRole = require('../utils/roleMiddleware');
 const AuditLog = require('../models/AuditLog');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
 
@@ -107,6 +108,24 @@ router.get('/logs/export/pdf', authMiddleware, requireRole('admin'), async (req,
   });
 
   doc.end();
+});
+
+router.delete('/logs', authMiddleware, requireRole('admin'), async (req, res) => {
+  const result = await AuditLog.deleteMany({});
+
+  await logAudit({
+    req,
+    action: 'audit.logs.clear_all',
+    entityType: 'audit_log',
+    entityId: null,
+    details: { deletedCount: result.deletedCount || 0 }
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: 'All audit logs deleted.',
+    deletedCount: result.deletedCount || 0
+  });
 });
 
 module.exports = router;

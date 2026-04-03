@@ -26,3 +26,8 @@ export async function exportAuditLogsPdf(params = {}) {
   const response = await api.get('/api/audit/logs/export/pdf', { params, responseType: 'blob' });
   triggerDownload(response.data, `audit-logs-${Date.now()}.pdf`);
 }
+
+export async function clearAllAuditLogs() {
+  const response = await api.delete('/api/audit/logs');
+  return response.data;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, RefreshCcw, Search, FileSpreadsheet, FileText } from 'lucide-react';
+import { ShieldCheck, RefreshCcw, Search, FileSpreadsheet, FileText, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { exportAuditLogsExcel, exportAuditLogsPdf, listAuditLogs } from '../api/auditApi';
+import { clearAllAuditLogs, exportAuditLogsExcel, exportAuditLogsPdf, listAuditLogs } from '../api/auditApi';
 import { listUsers } from '../api/accessApi';
 
 function formatDate(value) {
@@ -20,6 +20,7 @@ function AuditLogsPage({ currentUser, t }) {
   const [users, setUsers] = useState([]);
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     action: '',
@@ -78,6 +79,22 @@ function AuditLogsPage({ currentUser, t }) {
     }
   };
 
+  const onClearAllLogs = async () => {
+    const confirmed = window.confirm('Delete ALL audit logs? This action cannot be undone.');
+    if (!confirmed) return;
+
+    setClearing(true);
+    try {
+      const res = await clearAllAuditLogs();
+      setLogs([]);
+      toast.success(res?.message || t('auditClearSuccess'));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || t('auditClearFailed'));
+    } finally {
+      setClearing(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <section className="glass-card rounded-2xl p-6">
@@ -121,6 +138,15 @@ function AuditLogsPage({ currentUser, t }) {
             >
               <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {t('refreshing')}
+            </button>
+            <button
+              type="button"
+              onClick={onClearAllLogs}
+              disabled={clearing}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-60 dark:border-red-600/40 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+            >
+              <Trash2 className="h-4 w-4" />
+              {clearing ? t('pleaseWait') : t('clearAllAuditLogs')}
             </button>
           </div>
         </div>
