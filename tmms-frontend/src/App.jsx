@@ -151,6 +151,11 @@ function App() {
     toast.success(t('signedOut'));
   };
 
+  const onUserUpdate = (nextUser) => {
+    setUser(nextUser);
+    localStorage.setItem('tmms-user', JSON.stringify(nextUser));
+  };
+
   const onFileChange = (event) => {
     const next = event.target.files?.[0];
     if (!next) return;
@@ -298,6 +303,7 @@ function App() {
                 {t('signOut')}
               </button>
               <ProfileDropdown
+                user={user}
                 onLogout={onLogout}
                 onOpenProfile={() => setActiveModule('profile')}
                 onOpenSettings={() => setActiveModule('settings')}
@@ -397,7 +403,7 @@ function App() {
           ) : activeModule === 'audit' ? (
             <AuditLogsPage currentUser={user} t={t} />
           ) : activeModule === 'profile' ? (
-            <ProfilePage user={user} />
+            <ProfilePage user={user} onUserUpdate={onUserUpdate} />
           ) : activeModule === 'contact' ? (
             <ContactPage user={user} t={t} />
           ) : (

@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { UserCircle2, Settings, LogOut, User } from 'lucide-react';
 
-function ProfileDropdown({ onLogout, onOpenProfile, onOpenSettings }) {
+function ProfileDropdown({ onLogout, onOpenProfile, onOpenSettings, user }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -37,7 +37,11 @@ function ProfileDropdown({ onLogout, onOpenProfile, onOpenSettings }) {
         aria-expanded={open}
         aria-label="User menu"
       >
-        <UserCircle2 className="h-6 w-6" />
+        {user?.profilePhoto ? (
+          <img src={user.profilePhoto} alt="Profile" className="h-8 w-8 rounded-lg object-cover" />
+        ) : (
+          <UserCircle2 className="h-6 w-6" />
+        )}
       </button>
 
       <div

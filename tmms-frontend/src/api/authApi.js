@@ -14,3 +14,8 @@ export async function getMe() {
   const response = await api.get('/api/auth/me');
   return response.data;
 }
+
+export async function updateProfilePhoto(imageDataUrl) {
+  const response = await api.patch('/api/auth/me/profile-photo', { imageDataUrl });
+  return response.data;
+}

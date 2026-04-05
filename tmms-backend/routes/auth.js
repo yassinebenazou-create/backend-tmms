@@ -20,6 +20,7 @@ function sanitizeUser(user) {
     name: user.name,
     email: user.email,
     role: user.role,
+    profilePhoto: user.profilePhoto || null,
     createdAt: user.created_at
   };
 }
@@ -119,6 +120,39 @@ router.get('/me', authMiddleware, async (req, res) => {
   if (!user) {
     return res.status(404).json({ success: false, message: 'User not found.' });
   }
+
+  return res.status(200).json({ success: true, user: sanitizeUser(user) });
+});
+
+router.patch('/me/profile-photo', authMiddleware, async (req, res) => {
+  const { imageDataUrl = null } = req.body || {};
+  const user = await User.findOne({ id: req.user.id });
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  if (imageDataUrl !== null) {
+    const isDataUrl = typeof imageDataUrl === 'string' && /^data:image\/(png|jpe?g|webp);base64,/i.test(imageDataUrl);
+    if (!isDataUrl) {
+      return res.status(400).json({ success: false, message: 'Invalid image format. Use PNG/JPG/WEBP.' });
+    }
+
+    // ~2.5MB limit to avoid oversized documents.
+    if (imageDataUrl.length > 2_500_000) {
+      return res.status(413).json({ success: false, message: 'Image too large. Please use a smaller file.' });
+    }
+  }
+
+  user.profilePhoto = imageDataUrl;
+  await user.save();
+
+  await logAudit({
+    req,
+    action: imageDataUrl ? 'profile.photo.update' : 'profile.photo.remove',
+    entityType: 'user',
+    entityId: user.id,
+    details: {}
+  });
 
   return res.status(200).json({ success: true, user: sanitizeUser(user) });
 });
