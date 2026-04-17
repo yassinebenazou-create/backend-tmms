@@ -80,3 +80,44 @@ body {
     linear-gradient(#0f172a, #0f172a) padding-box,
     linear-gradient(130deg, rgba(59, 130, 246, 0.7), rgba(139, 92, 246, 0.5), rgba(34, 197, 94, 0.5)) border-box;
 }
+
+.tmms-notification-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.55) rgba(15, 23, 42, 0.35);
+}
+
+.tmms-notification-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tmms-notification-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.35);
+  border-radius: 999px;
+}
+
+.tmms-notification-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.65), rgba(139, 92, 246, 0.45));
+  border-radius: 999px;
+}
+
+.notification-enter {
+  opacity: 0;
+  transform: translateY(-12px);
+  animation: tmms-notification-in 0.35s ease forwards;
+}
+
+.notification-enter-active {
+  opacity: 1;
+}
+
+@keyframes tmms-notification-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
